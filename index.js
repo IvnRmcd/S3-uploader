@@ -7,12 +7,9 @@ const fs = require('fs')
 const database = require('./models')
 const path = require('path')
 const { S3 } = require('aws-sdk')
-
+const Image = database.Image
 
 const storage = multer.diskStorage({
-    destination: function (req,file,cb) {
-        cb(null, 'uploads/')
-    },
     filename:function(req,file,cb) {
         cb(null, file.originalname)
     }
@@ -76,7 +73,11 @@ app.post('/upload', upload.single('appImage') ,async(req,res) => {
        return res.status(400).json({message: `No File Selected`})
    }
    await fileUpload(req.file).then(
-       file => {return res.status(200).json({message: file})})
+       file => {
+        Image.create({
+            filename: file.Key
+        }).catch(err => {return res.status(400).json({message:err.message})})
+           return res.status(200).json({message: file})})
        .catch(err => {return res.status(400).json({message: err.message})})
 })
 
